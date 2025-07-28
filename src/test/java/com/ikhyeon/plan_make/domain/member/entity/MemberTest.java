@@ -83,10 +83,8 @@ class MemberTest {
         @DisplayName("같은 날 4번째 계획 생성 시 예외가 발생한다")
         void incrementPlanCreationCount_FourthTime_ThrowsException() {
             // given
-            Member member = createTestMember();
-            member.incrementPlanCreationCount();
-            member.incrementPlanCreationCount();
-            member.incrementPlanCreationCount();
+            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
+                                     "테스트유저", "https://example.com/profile.jpg", 3, LocalDate.now());
 
             // when & then
             assertThatThrownBy(member::incrementPlanCreationCount)
@@ -108,83 +106,13 @@ class MemberTest {
             assertThat(member.getDailyPlanCreationCount()).isEqualTo(1);
             assertThat(member.getLastPlanCreationDate()).isEqualTo(LocalDate.now());
         }
-    }
-
-    @DisplayName("계획 생성 가능 여부 테스트")
-    @Nested
-    class CanCreatePlanTodayTest {
 
         @Test
-        @DisplayName("계획을 생성한 적이 없으면 생성 가능하다")
-        void canCreatePlanToday_NeverCreated_ReturnsTrue() {
+        @DisplayName("과거 날짜에서 카운트 리셋 후 첫 번째 생성")
+        void incrementPlanCreationCount_AfterReset_FirstCreation() {
             // given
             Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
-                                     "테스트유저", "https://example.com/profile.jpg", 0, LocalDate.now().minusDays(1));
-
-            // when & then
-            assertThat(member.canCreatePlanToday()).isTrue();
-        }
-
-        @Test
-        @DisplayName("오늘 2번 생성했으면 아직 생성 가능하다")
-        void canCreatePlanToday_TwoTimesToday_ReturnsTrue() {
-            // given
-            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
-                                     "테스트유저", "https://example.com/profile.jpg", 2, LocalDate.now());
-
-            // when & then
-            assertThat(member.canCreatePlanToday()).isTrue();
-        }
-
-        @Test
-        @DisplayName("오늘 3번 생성했으면 더 이상 생성할 수 없다")
-        void canCreatePlanToday_ThreeTimesToday_ReturnsFalse() {
-            // given
-            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
-                                     "테스트유저", "https://example.com/profile.jpg", 3, LocalDate.now());
-
-            // when & then
-            assertThat(member.canCreatePlanToday()).isFalse();
-        }
-
-        @Test
-        @DisplayName("어제 3번 생성했어도 오늘은 생성 가능하다")
-        void canCreatePlanToday_ThreeTimesYesterday_ReturnsTrue() {
-            // given
-            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
-                                     "테스트유저", "https://example.com/profile.jpg", 3, LocalDate.now().minusDays(1));
-
-            // when & then
-            assertThat(member.canCreatePlanToday()).isTrue();
-        }
-    }
-
-    @DisplayName("일일 카운트 리셋 테스트")
-    @Nested
-    class ResetDailyPlanCountTest {
-
-        @Test
-        @DisplayName("canCreatePlanToday 호출 시 날짜가 다르면 카운트가 리셋된다")
-        void canCreatePlanToday_DifferentDate_ResetsCount() {
-            // given
-            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
-                                     "테스트유저", "https://example.com/profile.jpg", 3, LocalDate.now().minusDays(1));
-
-            // when
-            boolean canCreate = member.canCreatePlanToday();
-
-            // then
-            assertThat(canCreate).isTrue();
-            assertThat(member.getDailyPlanCreationCount()).isEqualTo(0);
-            assertThat(member.getLastPlanCreationDate()).isEqualTo(LocalDate.now());
-        }
-
-        @Test
-        @DisplayName("incrementPlanCreationCount 호출 시 날짜가 다르면 카운트가 리셋된다")
-        void incrementPlanCreationCount_DifferentDate_ResetsCount() {
-            // given
-            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
-                                     "테스트유저", "https://example.com/profile.jpg", 3, LocalDate.now().minusDays(1));
+                                     "테스트유저", "https://example.com/profile.jpg", 2, LocalDate.now().minusDays(2));
 
             // when
             member.incrementPlanCreationCount();
@@ -192,6 +120,37 @@ class MemberTest {
             // then
             assertThat(member.getDailyPlanCreationCount()).isEqualTo(1);
             assertThat(member.getLastPlanCreationDate()).isEqualTo(LocalDate.now());
+        }
+
+        @Test
+        @DisplayName("같은 날 연속 생성 시 카운트가 누적된다")
+        void incrementPlanCreationCount_SameDay_Accumulates() {
+            // given
+            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
+                                     "테스트유저", "https://example.com/profile.jpg", 1, LocalDate.now());
+            
+            // when
+            member.incrementPlanCreationCount();
+            
+            // then
+            assertThat(member.getDailyPlanCreationCount()).isEqualTo(2);
+            assertThat(member.getLastPlanCreationDate()).isEqualTo(LocalDate.now());
+        }
+
+        @Test
+        @DisplayName("정확히 3개 생성된 상태에서 추가 생성 시 예외 발생")
+        void incrementPlanCreationCount_ExactlyThree_ThrowsException() {
+            // given
+            Member member = new Member(null, SocialProvider.GOOGLE, "123456789", "test@example.com", 
+                                     "테스트유저", "https://example.com/profile.jpg", 3, LocalDate.now());
+
+            // when & then
+            assertThatThrownBy(member::incrementPlanCreationCount)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("일일 계획 생성 한도를 초과했습니다.");
+            
+            // 상태가 변경되지 않았는지 확인
+            assertThat(member.getDailyPlanCreationCount()).isEqualTo(3);
         }
     }
 }

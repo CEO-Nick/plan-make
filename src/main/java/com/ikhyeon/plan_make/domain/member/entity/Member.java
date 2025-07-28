@@ -51,27 +51,18 @@ public class Member extends BaseEntity {
     public void incrementPlanCreationCount() {
         LocalDate today = LocalDate.now();
 
-        if (!today.equals(this.lastPlanCreationDate)) {
-            resetDailyPlanCount();
+        // 현재 상태에서 신규 계획 생성 가능한지 확인
+        if (today.equals(this.lastPlanCreationDate) && this.dailyPlanCreationCount >= 3) {
+            throw new IllegalStateException("일일 계획 생성 한도를 초과했습니다.");
         }
 
-        if (!canCreatePlanToday()) {
-            throw new IllegalStateException("일일 계획 생성 한도를 초과했습니다.");
+        // 마지막 계획 생성 날짜가 과거라면 카운트 초기화
+        if (!today.equals(this.lastPlanCreationDate)) {
+            resetDailyPlanCount();
         }
 
         this.dailyPlanCreationCount++;
         this.lastPlanCreationDate = today;
-    }
-
-    public boolean canCreatePlanToday() {
-        LocalDate today = LocalDate.now();
-
-        // 마지막 계획 생성일이 오늘이 아니면 카운트 리셋
-        if (!today.equals(this.lastPlanCreationDate)) {
-            resetDailyPlanCount();
-        }
-
-        return this.dailyPlanCreationCount < 3;
     }
 
     private void resetDailyPlanCount() {
