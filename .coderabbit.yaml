@@ -1,0 +1,55 @@
+# CodeRabbit configuration file
+language: ko  # 한국어로 리뷰 받기
+
+# 리뷰 대상 파일 설정
+reviews:
+  profile: chill  # assertive, chill 중 선택
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: true  # 재미있는 시 형태 요약
+  review_status: true
+  collapse_empty_sections: true
+  auto_review:
+    enabled: true
+    drafts: false  # draft PR은 리뷰하지 않음
+
+# 리뷰할 파일 패턴
+path_filters:
+  - "!**/*.md"  # 마크다운 파일 제외
+  - "!**/target/**"  # 빌드 결과물 제외
+  - "!**/build/**"
+  - "!**/*.log"
+  - "!**/.git/**"
+  - "!**/.gradle/**"
+  - "!**/gradle/wrapper/**"
+
+# 특별히 주의깊게 리뷰받을 파일들
+path_instructions:
+  - path: "src/main/java/**/*.java"
+    instructions: |
+      다음 관점에서 코드를 리뷰해주세요:
+      - Spring Boot 및 JPA 베스트 프랙티스 준수
+      - DDD(Domain-Driven Design) 아키텍처 패턴 적용
+      - 코드 가독성 및 유지보수성
+      - 보안 취약점 (특히 인증/인가 관련)
+      - 성능 최적화 가능성
+      - 테스트 가능한 구조인지 확인
+      
+  - path: "src/test/java/**/*.java"
+    instructions: |
+      테스트 코드에 대해 다음을 확인해주세요:
+      - 테스트 커버리지 충분성
+      - 단위 테스트 vs 통합 테스트 분리
+      - Given-When-Then 패턴 적용
+      - Mock 사용의 적절성
+
+# 리뷰 상세 설정
+chat:
+  auto_reply: true
+
+# 특정 키워드 감지 시 추가 리뷰
+knowledge_base:
+  learnings:
+    enabled: true
+  
+early_access: false
