@@ -47,16 +47,6 @@ public class Member extends BaseEntity {
     private LocalDate lastPlanCreationDate;
 
     // 비즈니스 로직
-    public boolean canCreatePlanToday() {
-        LocalDate today = LocalDate.now();
-
-        // 마지막 계획 생성일이 오늘이 아니면 카운트 리셋
-        if (!today.equals(this.lastPlanCreationDate)) {
-            resetDailyPlanCount();
-        }
-
-        return this.dailyPlanCreationCount < 3;
-    }
 
     public void incrementPlanCreationCount() {
         LocalDate today = LocalDate.now();
@@ -71,6 +61,17 @@ public class Member extends BaseEntity {
 
         this.dailyPlanCreationCount++;
         this.lastPlanCreationDate = today;
+    }
+
+    public boolean canCreatePlanToday() {
+        LocalDate today = LocalDate.now();
+
+        // 마지막 계획 생성일이 오늘이 아니면 카운트 리셋
+        if (!today.equals(this.lastPlanCreationDate)) {
+            resetDailyPlanCount();
+        }
+
+        return this.dailyPlanCreationCount < 3;
     }
 
     private void resetDailyPlanCount() {
